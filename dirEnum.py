@@ -1,38 +1,51 @@
 #!/usr/bin/env python
 
-import requests,sys,math,concurrent.futures
+import requests,sys,threading
+from queue import Queue
 
-def dir_search(dirs):
+class dirScanner:
+	def __init__(self, ip, wordlist, ext, threads):
+		self.ip = ip
+		self.wordlist = wordlist
+		self.ext = ext
+		self.threads = threads
+		self.q = Queue()
 
-	for dir in dirs:
-		sub_dir = f"http://{sys.argv[1]}/{dir}.html"
-		response = requests.get(sub_dir)
-		
-		if response.status_code==404:
-			pass
-		else:
-			return f"{sub_dir}     [Status code: {response.status_code}]"
+	def dirScan(self):
+		while not self.q.empty():
+			dir = self.q.get()
+			url = f"http://{self.ip}/{dir}.{self.ext}"
+			response = requests.get(url, verify=False)
+			
+			if response.status_code==404:
+				pass
+			else:
+				directories.append(url)
+				print(url,"                [Status code:",response.status_code,"]")
+
+	def dirEnum(self):
+		file = open(self.wordlist, 'r')
+		for dir in file.read().split():
+			self.q.put(dir)
+
+		thread_list = []
+
+		for _ in range(int(self.threads)):
+			thread = threading.Thread(target=self.dirScan)
+			thread_list.append(thread)
+			thread.start()
+
+		for thread in thread_list:
+			thread.join()
 
 
 if __name__=='__main__':
 
-	if len(sys.argv)<2:
-		print(f"\nUsage: python {sys.argv[0]} <ip/domain> <wordlist> <threads>")
-		exit()
-		
-	file = open(sys.argv[2])
-	dirs = file.read().split('\n')
+	if len(sys.argv)<4:
+		print("Usage: python dir_enum.py <ip-address> <wordlist> <extension> <threads>")
+		sys.exit(0)
 
-	t = sys.argv[3]
+	directories = []
 
-	for i in range(math.ceil(len(dirs)/t)):
-		if len(dirs)-t>t:
-			pass
-		else:
-			t = len(dirs)-t
-		with concurrent.futures.ThreadPoolExecutor() as executor:
-			search = [executor.submit(dir_search, direc) for direc in dirs[i:i+t]]
-			i+=t
-		for res in search:
-			print(res.result())
-
+	scan = dirScanner(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+	scan.dirEnum()
