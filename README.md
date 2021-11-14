@@ -7,5 +7,7 @@ This repository is dedicated to the making/development of python tools for penet
 The following tools are currently available:
 
 dirEnum.py --> for directory enumeration of websites (Threading available to improve scan times)
+
 portScan.py --> for scanning ip address for gathering intel surrounding ports (Threading available to improve scan times)
+
 Other tools(fuzzer, sshbruter, hashcracker) need improvement via threading.
